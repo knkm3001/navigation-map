@@ -25,8 +25,8 @@ export default {
       circle:null,
       maker:null,
       pline:null,
-      latlngs:[],
-      markers:[]
+      latlngs:[], // [{"lat": ***,"lng": *** },{"lat": *** ,"lng": *** },]
+      markers:[]  // L.marker(~~) で作られたオブジェクト
     }
   },
   methods:{
@@ -50,20 +50,24 @@ export default {
       this.pline = L.polyline(this.latlngs, { color: 'red', weight: 5, bubblingMouseEvents: false })
                     .addTo(this.mapObj)
 
+      // 右下のスケール
       L.control.scale({
         imperial: true,
         metric: true
       }).addTo(this.mapObj);
+
     },
     setMaker(){
       /* クリックしたところにマーカーとラインを描画するように初期化する */
       this.mapObj.on('click',(e)=>{
-          let mk = L.marker(e.latlng, { icon: L.divIcon( { className: 'red marker', iconSize: [ 16, 16 ] } ) })
+          let marker = L.marker(e.latlng, { icon: L.divIcon( { className: 'red marker', iconSize: [ 16, 16 ] } ) })
                     .on('click', this.delMaker)
-          this.mapObj.addLayer(mk);
-          this.markers.push(mk._leaflet_id);
+          this.mapObj.addLayer(marker);
+          this.markers.push(marker);
           this.setLine(e);
-          console.log(JSON.stringify(this.markers,null,'\t'));
+
+
+
           }
         )
     },
@@ -79,19 +83,15 @@ export default {
       console.log('index: '+index)
       this.latlngs.splice(index,1);
       this.markers.splice(index,1);
-      console.log(JSON.stringify(this.markers,null,'\t'));
       console.log(JSON.stringify(this.latlngs,null,'\t'));
-      console.log(e.target)
       this.mapObj.removeLayer(e.target);
       this.pline.setLatLngs(this.latlngs);
     },
     clearAll(){
       this.pline.setLatLngs([]);
-      L.LayerGroup(this.markers).eachLayer((layer)=>{
-        if(this.markers.indexOf(layer._leaflet_id)>=0){
-          this.mapObj.removeLayer(layer);
-        }
-      })
+      for(let v of this.markers){
+          this.mapObj.removeLayer(v);
+      }
     },
     doSomething(){
       alert('click');
