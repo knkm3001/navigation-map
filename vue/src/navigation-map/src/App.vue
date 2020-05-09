@@ -1,10 +1,8 @@
 <template>
   <div id=app @contextmenu.prevent="$refs.ctxMenu.open">
     <context-menu id="context-menu" ref="ctxMenu">
+      <li >drow passage map </li>
       <li @click="clearAll()">clear all</li>
-      <li @click="doSomething()">アラートイベント</li>
-      <li class="disabled">disabled</li>
-      <li>option 3</li>
     </context-menu>
   </div>
 </template>
@@ -50,7 +48,9 @@ export default {
       this.pline = L.polyline(this.latlngs, { color: 'red', weight: 5, bubblingMouseEvents: false })
                     .addTo(this.mapObj)
 
-      // 右下のスケール
+
+
+      // 左下のスケール
       L.control.scale({
         imperial: true,
         metric: true
@@ -62,6 +62,8 @@ export default {
       this.mapObj.on('click',(e)=>{
           let marker = L.marker(e.latlng, { icon: L.divIcon( { className: 'red marker', iconSize: [ 16, 16 ] } ) })
                     .on('click', this.delMaker)
+                    .bindPopup('lat: '+e.latlng.lat.toFixed(3)+'<br>long: '+e.latlng.lng.toFixed(3))
+                    .on('mouseover', function () {this.openPopup();});
           this.mapObj.addLayer(marker);
           this.markers.push(marker);
           this.setLine(e);
@@ -92,9 +94,6 @@ export default {
       for(let v of this.markers){
           this.mapObj.removeLayer(v);
       }
-    },
-    doSomething(){
-      alert('click');
     }
   },
   mounted() {
