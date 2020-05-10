@@ -49,28 +49,64 @@ export default {
       this.plineObj = L.polyline(this.latlngs, { color: 'red', weight: 5, bubblingMouseEvents: false })
                     .addTo(this.mapObj)
 
-      // 左下のスケール
-      L.control.scale({
-        imperial: true,
-        metric: true
-      }).addTo(this.mapObj);
 
+    },
+    showLatLngTable(){
+      //mousemoveイベントを設定
+      this.mapObj.on('mousemove', (e)=>{
+        //地図上を移動した際にdiv中に緯度経度を表示
+        let box = document.getElementById("latlondiv");
+        let lng = this.parseLng(e.latlng.lng);
+        let html = "lat:" + e.latlng.lat.toFixed(3) + "<br>" + "lng:" + lng;
+        box.innerHTML = html;
+        box.style.visibility = "visible";
+      })
+
+
+      //左上にdivコントロールを表示
+      let latloninfo = L.control({ position: "bottomleft" });
+      latloninfo.onAdd = function () {
+        //divを作成
+        this.elem = L.DomUtil.create('div', "infostyle");
+        //後で使うためにidを設定
+        this.elem.id = "latlondiv";
+        //最初は非表示
+        this.elem.style.visibility = "hidden";
+        //div上のとmousemoveイベントがmapに連鎖しないように設定
+        this.elem.onmousemove = function (e) { e.stopPropagation() };
+        return this.elem;
+      };
+      latloninfo.addTo(this.mapObj);
     },
     setMaker(){
       /* クリックしたところにマーカーとラインを描画するように初期化する */
       this.mapObj.on('click',(e)=>{
           let marker = L.marker(e.latlng, { icon: L.divIcon( { className: 'red marker', iconSize: [ 16, 16 ] } ) })
                     .on('click', this.delMaker)
-                    .bindPopup('lat: '+e.latlng.lat.toFixed(3)+'<br>long: '+e.latlng.lng.toFixed(3))
+                    .bindPopup((e)=>{
+                      let truelng = this.parseLng(e._latlng.lng);
+                      console.log(truelng);
+                      return 'lat: '+e._latlng.lat.toFixed(3)+'<br>long: '+truelng
+                      })
                     .on('mouseover', function () {this.openPopup();});
           this.mapObj.addLayer(marker);
           this.markers.push(marker);
           this.setLine(e);
-
-
-
           }
         )
+    },
+    parseLng(row_lng){
+      /* 経度を修正する */
+      let isNegative = false;
+      if(row_lng < 0){
+        row_lng *= -1;
+        isNegative = true;
+      }
+      if(Math.floor(row_lng/180)%2 == 0){
+        return isNegative ? -1*(row_lng%180).toFixed(3):(row_lng%180).toFixed(3);
+      }else{
+        return isNegative ? (180-row_lng%180).toFixed(3):-1*(180-row_lng%180).toFixed(3);
+      }
     },
     setLine(e){
        /* ラインを引く */
@@ -93,12 +129,14 @@ export default {
       for(let v of this.markers){
           this.mapObj.removeLayer(v);
       }
-      this.markers = null
+      this.markers = []
+      this.latlngs = []
     }
   },
   mounted() {
     this.showMap();
     this.setMaker();
+    this.showLatLngTable();
   }
 }
 </script>
