@@ -1,7 +1,8 @@
 <template>
   <div id=app @contextmenu.prevent="$refs.ctxMenu.open">
     <context-menu id="context-menu" ref="ctxMenu">
-      <li >drow passage map </li>
+      <li >mesure from this point </li>
+      <li >show passage tables </li>
       <li @click="clearAll()">clear all</li>
     </context-menu>
   </div>
@@ -13,6 +14,7 @@ import  L from 'leaflet'
 
 import contextMenu from 'vue-context-menu'
 
+
 export default {
   components:{
     contextMenu
@@ -20,11 +22,10 @@ export default {
   data(){
     return {
       mapObj : null,
-      circle:null,
-      maker:null,
-      pline:null,
-      latlngs:[], // [{"lat": ***,"lng": *** },{"lat": *** ,"lng": *** },]
-      markers:[]  // L.marker(~~) で作られたオブジェクト
+      maker : null,
+      pline : null,
+      latlngs : [], // [{"lat": ***,"lng": *** },{"lat": *** ,"lng": *** },]
+      markers : []  // L.marker(~~) で作られたオブジェクト
     }
   },
   methods:{
@@ -45,10 +46,8 @@ export default {
       Layers["Sea Mark"].addTo(this.mapObj)
 
       this.latlngs = [];
-      this.pline = L.polyline(this.latlngs, { color: 'red', weight: 5, bubblingMouseEvents: false })
+      this.plineObj = L.polyline(this.latlngs, { color: 'red', weight: 5, bubblingMouseEvents: false })
                     .addTo(this.mapObj)
-
-
 
       // 左下のスケール
       L.control.scale({
@@ -76,7 +75,7 @@ export default {
     setLine(e){
        /* ラインを引く */
       this.latlngs.push(e.latlng);
-      this.pline.addLatLng(e.latlng);
+      this.plineObj.addLatLng(e.latlng);
       console.log(JSON.stringify(this.latlngs,null,'\t'));
     },
     delMaker(e){
@@ -87,13 +86,14 @@ export default {
       this.markers.splice(index,1);
       console.log(JSON.stringify(this.latlngs,null,'\t'));
       this.mapObj.removeLayer(e.target);
-      this.pline.setLatLngs(this.latlngs);
+      this.plineObj.setLatLngs(this.latlngs);
     },
     clearAll(){
-      this.pline.setLatLngs([]);
+      this.plineObj.setLatLngs([]);
       for(let v of this.markers){
           this.mapObj.removeLayer(v);
       }
+      this.markers = null
     }
   },
   mounted() {
