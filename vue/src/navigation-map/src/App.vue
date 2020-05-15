@@ -1,36 +1,42 @@
 <template>
-  <div id=app @contextmenu.prevent="$refs.ctxMenu.open">
+  <div id=appp >
+<div id=app @contextmenu.prevent="$refs.ctxMenu.open">
+
     <context-menu id="context-menu" ref="ctxMenu">
       <li >mesure from this point </li>
-      <li >show passage tables </li>
+      <li @click="openChartModal()">show chart tables </li>
       <li @click="clearAll()">clear all</li>
     </context-menu>
+    <chartModal v-if='chartModalFlg'></chartModal>
+  </div>
   </div>
 </template>
 
 <script>
-import  'leaflet/dist/leaflet.css'
+
 import  L from 'leaflet'
 import { mapState } from "vuex"
 import contextMenu from 'vue-context-menu'
-
+import chartModal from './components/chartModal.vue'
 
 export default {
   components:{
-    contextMenu
+    contextMenu,
+    chartModal
   },
   data(){
     return {
-          mapObj : null,
-          plineObj : null,
-          markers : [], // L.marker(~~) で作られたマーカーオブジェクトが入ってる配列
-          latlngs : []  // マーカーの緯度経度。これはいらないかもしれない
+      mapObj : null,
+      plineObj : null,
+      markers : [], // L.marker(~~) で作られたマーカーオブジェクトが入ってる配列
+      latlngs : [], // マーカーの緯度経度。これはいらないかもしれない
+      chartModalFlg: false
     }
   },
   methods:{
     showMap(){
       /* マップの初期化、レンダリング */
-      this.mapObj = L.map( 'app', { center: L.latLng( 35.5825, 139.852778 ), zoom: 12 } )
+      this.mapObj = L.map( 'appp', { center: L.latLng( 35.5825, 139.852778 ), zoom: 12 } )
 
       let Base_Maps = {};
       Base_Maps["Open street this.this.mapObj"] = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -156,6 +162,12 @@ export default {
       // LocalStoragにデータ保存
       // TODO: 現在いろんなとこに書いてるから自動化する
       this.$store.dispatch('doSave')
+    },
+    openChartModal(){
+      this.chartModalFlg = true
+    },
+    closeChartTableModal(){
+      this.chartModalFlg = false
     }
   },
   computed : {
