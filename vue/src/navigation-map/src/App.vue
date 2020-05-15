@@ -11,7 +11,7 @@
 <script>
 import  'leaflet/dist/leaflet.css'
 import  L from 'leaflet'
-
+import { mapState } from "vuex"
 import contextMenu from 'vue-context-menu'
 
 
@@ -21,16 +21,15 @@ export default {
   },
   data(){
     return {
-      mapObj : null,
-      maker : null,
-      pline : null,
-      latlngs : [], // [{"lat": ***,"lng": *** },{"lat": *** ,"lng": *** },]
-      markers : []  // L.marker(~~) で作られたオブジェクト
+          mapObj : null,
+          plineObj : null,
+          markers : [], // L.marker(~~) で作られたマーカーオブジェクトが入ってる配列
+          latlngs : []  // マーカーの緯度経度。これはいらないかもしれない
     }
   },
   methods:{
     showMap(){
-      /* マップのレンダリング */
+      /* マップの初期化、レンダリング */
       this.mapObj = L.map( 'app', { center: L.latLng( 35.5825, 139.852778 ), zoom: 12 } )
 
       let Base_Maps = {};
@@ -46,13 +45,12 @@ export default {
       Layers["Sea Mark"].addTo(this.mapObj)
 
       this.latlngs = [];
-      this.plineObj = L.polyline(this.latlngs, { color: 'red', weight: 5, bubblingMouseEvents: false })
+      this.plineObj = L.polyline(this.latlngs, { color: 'red', weight: 5, bubblingMouseEvents: false, edit_with_drag: true })
                     .addTo(this.mapObj)
-
-
     },
-    showLatLngTable(){
-      //mousemoveイベントを設定
+    showCordinateOfMouse(){
+      /* マウスの座標を表示 */
+
       this.mapObj.on('mousemove', (e)=>{
         //地図上を移動した際にdiv中に緯度経度を表示
         let box = document.getElementById("latlondiv");
@@ -78,25 +76,49 @@ export default {
       };
       latloninfo.addTo(this.mapObj);
     },
-    setMaker(){
-      /* クリックしたところにマーカーとラインを描画するように初期化する */
+    putMarker(v){
+      /* マーカーを置くための関数 */
+
+      let marker = L.marker(v.latlng, { icon: L.divIcon( { className: 'red marker', iconSize: [ 16, 16 ] } ) })
+                .on('click', this.delMaker)
+                .bindPopup((v)=>{ // ポップアップ設定
+                  let truelng = this.parseLng(v._latlng.lng);
+                  return 'lat: '+v._latlng.lat.toFixed(3)+'<br>long: '+truelng
+                  })
+                .on('mouseover', function () {this.openPopup();});
+      this.mapObj.addLayer(marker);
+      this.markers.push(marker);
+      this.setMarkerLine(v); // マーカー間に線を引く
+      console.log(JSON.stringify(this.marker_data,null,'\t'));
+    },
+    setMarkerLine(e){
+       /* マーカー間のラインを引く */
+
+      this.latlngs.push(e.latlng);
+      this.plineObj.addLatLng(e.latlng);
+    },
+    putMarkesrsOflocalStorage(data){
+      /* localstrage上のデータからマーカーをおく */
+
+      for(let v of data){
+        this.putMarker(v)
+      }
+    },
+    initMakerOption(){
+      /* クリックしたところにマーカーとラインを描画するように設定する */
+
       this.mapObj.on('click',(e)=>{
-          let marker = L.marker(e.latlng, { icon: L.divIcon( { className: 'red marker', iconSize: [ 16, 16 ] } ) })
-                    .on('click', this.delMaker)
-                    .bindPopup((e)=>{
-                      let truelng = this.parseLng(e._latlng.lng);
-                      console.log(truelng);
-                      return 'lat: '+e._latlng.lat.toFixed(3)+'<br>long: '+truelng
-                      })
-                    .on('mouseover', function () {this.openPopup();});
-          this.mapObj.addLayer(marker);
-          this.markers.push(marker);
-          this.setLine(e);
+          console.log(e.latlng)
+          this.putMarker(e)
+          let some_marker_data = {latlng:{"lat": e.latlng.lat,"lng": e.latlng.lng}, "other":{} }
+          this.$store.commit('pushMarkerData',{'some_marker_data':some_marker_data});
+          this.save()
           }
         )
     },
     parseLng(row_lng){
       /* 経度を修正する */
+
       let isNegative = false;
       if(row_lng < 0){
         row_lng *= -1;
@@ -108,35 +130,48 @@ export default {
         return isNegative ? (180-row_lng%180).toFixed(3):-1*(180-row_lng%180).toFixed(3);
       }
     },
-    setLine(e){
-       /* ラインを引く */
-      this.latlngs.push(e.latlng);
-      this.plineObj.addLatLng(e.latlng);
-      console.log(JSON.stringify(this.latlngs,null,'\t'));
-    },
     delMaker(e){
       /* マーカーとライン削除 */
+
       let index = this.latlngs.indexOf(e.latlng);
       console.log('index: '+index)
-      this.latlngs.splice(index,1);
       this.markers.splice(index,1);
+      this.$store.commit('delMarkerData',{'index':index});
       console.log(JSON.stringify(this.latlngs,null,'\t'));
       this.mapObj.removeLayer(e.target);
       this.plineObj.setLatLngs(this.latlngs);
+      this.save()
     },
     clearAll(){
+      /* マップ上のすべてのラインを削除 */
+
       this.plineObj.setLatLngs([]);
       for(let v of this.markers){
           this.mapObj.removeLayer(v);
       }
-      this.markers = []
-      this.latlngs = []
+      this.$store.commit('updateMarkerData',{'marker_data':[]});
+      this.save()
+    },
+    save(){
+      // LocalStoragにデータ保存
+      // TODO: 現在いろんなとこに書いてるから自動化する
+      this.$store.dispatch('doSave')
     }
+  },
+  computed : {
+    ...mapState({
+        marker_data: state => state.marker_data
+    })
+  },
+  beforeCreate() {
+    // LocalStorageからデータ読込
+    this.$store.dispatch('doLoad')
   },
   mounted() {
     this.showMap();
-    this.setMaker();
-    this.showLatLngTable();
+    this.initMakerOption();
+    this.showCordinateOfMouse();
+    this.putMarkesrsOflocalStorage(this.marker_data)
   }
 }
 </script>
