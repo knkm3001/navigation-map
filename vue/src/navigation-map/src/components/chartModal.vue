@@ -1,28 +1,30 @@
 <template>
   <div id='overlay' v-on:click='closeModal'>
-      <div id='content' v-on:click='stopEvent'>
-        <p>chart table</p>
-          <table class="table">
-          <thead>
-          <tr>
-          <th>No</th>
-          <th>Lat/Lng</th>
-          <th>Bearing</th>
-          <th>Dist.</th>
-          <th>From</th>
-          <th>To</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr v-for="(v,index) in marker_data" :key="index">
-          <td>{{index+1}}</td>
-          <td>Lat: {{showLat(v)}}<br>Lng: {{showLng(v)}}</td>
-          <td>{{v.bear}}</td>
-          <td>{{v.dist}}</td>
-          </tr>
-          </tbody>
-          </table>
-        <p>Total Dist: {{getTotalDist}}</p>
+    <div id='content' v-on:click='stopEvent'>
+      <p class='chart-title'>chart table</p>
+      <table class='table'>
+        <thead>
+        <tr>
+        <th class='no'>No</th>
+        <th class='latlng'>Lat/Lng</th>
+        <th class='bearing'>Bearing</th>
+        <th class='dist'>Dist.</th>
+        <th class='from'>From</th>
+        <th class='to'>To</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="(v,index) in marker_data" :key="index">
+        <td class='no'>{{index+1}}</td>
+        <td class='latlng'>Lat:&#009;{{showLat(v)}}<br>Lng:&#009;{{showLng(v)}}</td>
+        <td class='bearing'>{{v.bear}}</td>
+        <td class='dist'>{{v.dist}}</td>
+        <td class='from'>{{addDist(v.dist)}}</td>
+        <td class='to'>{{(getTotalDist-distsum).toFixed(2)}}</td>
+        </tr>
+        </tbody>
+      </table>
+      <p class='result'>Total Dist: {{getTotalDist}} nm</p>
     </div>
   </div>
 </template>
@@ -33,7 +35,9 @@ import { mapState, mapGetters } from "vuex"
 export default{
   name: 'chartModal',
   date(){
-    return{}
+    return{
+      distsum:0
+    }
   },
   methods:{
     closeModal(){
@@ -42,6 +46,14 @@ export default{
     },
     stopEvent(){
       event.stopPropagation()
+    },
+    addDist(dist){
+      if(dist !==  '-'){
+        this.distsum += parseFloat(dist)
+      }else{
+        this.distsum = 0
+      }
+      return this.distsum.toFixed(2)
     },
     showLat(v){
         let NorS = v.latlng.lat >0 ? ' N' : ' S';
@@ -84,9 +96,73 @@ export default{
   border-color: #ffffff;
   border-width: 2px;
   z-index:2;
-  min-width:40%;
-  height:50%;
-  padding: 1em;
+  max-width:80%;
+  height:80%;
+  padding: 1em 2em;
   background: rgba(255, 255, 255, 0.8);
+}
+
+.chart-title{
+  font-family: 'Noto Sans', sans-serif;
+  font-size:1.8em;
+  text-align: center;
+}
+
+table{
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 1.1em;
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+
+}
+
+thead, tbody {
+  display: block;
+  width: 100%;
+}
+tbody {
+  overflow-x: hidden;
+  overflow-y: scroll;
+  height:700px;
+}
+
+th.no, td.no{
+  width:60px;
+}
+
+th.latlng, td.latlng{
+  width:250px;
+}
+
+th.bearing, td.bearing,th.dist, td.dist{
+  width:150px;
+}
+
+
+th.from, td.from, th.to, td.to{
+ width:150px;
+}
+
+table th,table td{
+  padding: 10px 0;
+  text-align: center;
+}
+
+table thead>tr{
+  background-color: rgba(170, 170, 170, 0.8)
+}
+
+table tbody>tr:nth-child(even){
+  background-color: rgba(230, 230, 230, 0.952)
+}
+table tbody>tr:nth-child(odd){
+  background-color: rgba(215, 215, 215, 0.952)
+}
+
+.result{
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 1.3em;
+  text-align: center;
 }
 </style>

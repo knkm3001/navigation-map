@@ -2,7 +2,7 @@
   <div class='container' @contextmenu.prevent="$refs.ctxMenu.open">
     <div id='Map'></div>
     <context-menu id="context-menu" ref="ctxMenu">
-      <li >mesure from here </li>
+      <!--<li >mesure from here </li>-->
       <li @click="openChartModal()">show chart tables </li>
       <li @click="clearAll()">clear all</li>
     </context-menu>
@@ -31,7 +31,7 @@ export default {
   methods:{
     showMap(){
       /* マップの初期化、レンダリング */
-      this.mapObj = L.map( 'Map', { center: L.latLng( 35.440, 139.824 ), zoom: 11 } )
+      this.mapObj = L.map( 'Map', { center: L.latLng( 35.440, 139.824 ), zoom: 11,worldCopyJump: true} )
 
       let Base_Maps = {};
       Base_Maps["Open street this.this.mapObj"] = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -180,28 +180,37 @@ export default {
 
 <style>
 
+
 #latlondiv{
-    padding: 2px;
-    background      : rgb(255, 255, 255,0.8);
-    width: 80px;
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 1.1em;
+  padding: 2px;
+  background      : rgb(255, 255, 255,0.8);
+  width: 80px;
 }
 
 .marker {
-    text-align      : center;
-    color           : white;
-    font-size       : 16;
-    border-radius   : 8px;
-    box-shadow      : 8px 8px 8px rgba( 0, 0, 0, 0.4 )
+  text-align      : center;
+  color           : white;
+  font-size       : 16;
+  border-radius   : 8px;
+  box-shadow      : 8px 8px 8px rgba( 0, 0, 0, 0.4 )
 }
+
 .red {
     background      : red
 }
+
 ul.ctx-menu {
   padding: 5px;
 }
 ul.ctx-menu li {
   cursor: pointer;
   padding: 2px;
+}
+ul.ctx-menu li:hover {
+  background-color: rgb(219, 219, 219);
+  transition: background-color 800ms;
 }
 
 </style>
