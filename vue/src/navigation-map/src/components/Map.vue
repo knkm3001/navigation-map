@@ -3,7 +3,7 @@
     <div id='Map'></div>
     <context-menu id="context-menu" ref="ctxMenu">
       <!--<li >mesure from here </li>-->
-      <li @click="openChartModal()">show chart tables </li>
+      <li @click="openChartModal()">show chart table </li>
       <li @click="clearAll()">clear all</li>
     </context-menu>
   </div>
