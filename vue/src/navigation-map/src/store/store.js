@@ -7,7 +7,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   //plugins: [createPersistedState()],
   state: {
-    marker_data : [] // 各makerの緯度経度が入ってる。添字番号はmarker_dataと一致 [{"lat": ***,"lng": *** },{"lat": *** ,"lng": *** },]
+    marker_data : [] // 各makerの緯度経度が入ってる。[{"latlng": {"lat": ****,"lng": ****},"other": {},"bear": "-","dist": "-"},{..}]
         },
   mutations: {
     save(state){
