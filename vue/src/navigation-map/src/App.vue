@@ -2,7 +2,6 @@
   <div id='app' >
     <chartModal v-if='chartModalFlg' v-on:close-modal='closeChartModal'></chartModal>
     <Map id='map' v-on:open-modal='openChartModal'></Map>
-
   </div>
 </template>
 
@@ -40,6 +39,9 @@ html, body, #Map {
     z-index: 0;
     height: 1200px;
     overflow: hidden;
+}
+body {
+  margin:0
 }
 
 

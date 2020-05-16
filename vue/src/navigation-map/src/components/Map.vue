@@ -2,7 +2,7 @@
   <div class='container' @contextmenu.prevent="$refs.ctxMenu.open">
     <div id='Map'></div>
     <context-menu id="context-menu" ref="ctxMenu">
-      <li >mesure from this point </li>
+      <li >mesure from here </li>
       <li @click="openChartModal()">show chart tables </li>
       <li @click="clearAll()">clear all</li>
     </context-menu>
@@ -31,7 +31,7 @@ export default {
   methods:{
     showMap(){
       /* マップの初期化、レンダリング */
-      this.mapObj = L.map( 'Map', { center: L.latLng( 35.5825, 139.852778 ), zoom: 12 } )
+      this.mapObj = L.map( 'Map', { center: L.latLng( 35.440, 139.824 ), zoom: 11 } )
 
       let Base_Maps = {};
       Base_Maps["Open street this.this.mapObj"] = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -108,10 +108,9 @@ export default {
 
       this.mapObj.on('click',(e)=>{
           this.putMarker(e)
-          let some_marker_data = {latlng:{"lat": e.latlng.lat,"lng": e.latlng.lng}, "other":{} }
+          let some_marker_data = {latlng:{"lat": e.latlng.lat,"lng": e.latlng.lng}, "other":{}, "bear":"-","dist":"-" }
           this.$store.commit('pushMarkerData',{'some_marker_data':some_marker_data});
           this.save()
-          console.log(JSON.stringify(this.marker_data,null,'\t'));
           }
         )
     },
@@ -136,7 +135,6 @@ export default {
       this.markers.splice(index,1);
       this.latlngs.splice(index,1);
       this.$store.commit('delMarkerData',{'index':index});
-      console.log(JSON.stringify(this.latlngs,null,'\t'));
       this.mapObj.removeLayer(e.target);
       this.plineObj.setLatLngs(this.latlngs);
       this.save()
@@ -182,7 +180,11 @@ export default {
 
 <style>
 
-
+#latlondiv{
+    padding: 2px;
+    background      : rgb(255, 255, 255,0.8);
+    width: 80px;
+}
 
 .marker {
     text-align      : center;
