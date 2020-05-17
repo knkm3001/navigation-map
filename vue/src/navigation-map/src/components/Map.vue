@@ -1,11 +1,16 @@
 <template>
   <div class='container' @contextmenu.prevent="$refs.ctxMenu.open">
-    <div id='Map'></div>
-    <context-menu id="context-menu" ref="ctxMenu">
-      <!--<li >mesure from here </li>-->
-      <li @click="openChartModal()">show chart table </li>
-      <li @click="clearAll()">clear all</li>
-    </context-menu>
+    <transition name='nav-menue'>
+      <HumbergerMenu v-show='humbergerMenuFlg' v-on:multiHundler='multiHundler'></Humbergermenu>
+    </transition>
+    <ChartModal v-show='chartModalFlg' v-on:multiHundler='multiHundler'></ChartModal>
+    <div id='Map'>
+      <context-menu id="context-menu" ref="ctxMenu">
+        <!--<li >mesure from here </li>-->
+        <li @click="multiHundler('changeChartModalState')">show chart table </li>
+        <li @click="multiHundler('clearAll')">clear all</li>
+      </context-menu>
+    </div>
   </div>
 </template>
 
@@ -14,14 +19,20 @@
 import  L from 'leaflet'
 import { mapState } from "vuex"
 import contextMenu from 'vue-context-menu'
+import ChartModal from './ChartModal.vue'
+import HumbergerMenu from './HumbergerMenu.vue'
 
 export default {
   name: 'Map',
   components:{
-    contextMenu
+    contextMenu,
+    ChartModal,
+    HumbergerMenu
   },
   data(){
     return {
+      humbergerMenuFlg:false,
+      chartModalFlg: false,
       mapObj : null,
       plineObj : null,
       markers : [], // L.marker(~~) で作られたマーカーオブジェクトが入ってる配列
@@ -29,6 +40,24 @@ export default {
     }
   },
   methods:{
+    multiHundler(selecter){
+      /** 指示を受けて実行するのが主な機能 */
+      switch(selecter){
+        case 'changeChartModalState':
+          if(this.humbergerMenuFlg) this.humbergerMenuFlg = !this.humbergerMenuFlg
+          this.chartModalFlg = !this.chartModalFlg
+          break;
+        case 'clearAll':
+          if(this.humbergerMenuFlg) this.humbergerMenuFlg = !this.humbergerMenuFlg
+          this.clearAll()
+          break
+        case 'changeLayer':
+          break
+        case 'changeMenueState':
+          this.humbergerMenuFlg = !this.humbergerMenuFlg
+          break
+      }
+    },
     showMap(){
       /* マップの初期化、レンダリング */
       this.mapObj = L.map( 'Map', { center: L.latLng( 35.440, 139.824 ), zoom: 11,worldCopyJump: true} )
@@ -41,7 +70,7 @@ export default {
       let Layers = {};
       Layers["Sea Mark"] = L.tileLayer( 'http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png')
 
-      L.control.layers(Base_Maps, Layers).addTo(this.mapObj);
+      //L.control.layers(Base_Maps, Layers).addTo(this.mapObj);
       Base_Maps["Open street this.this.mapObj"].addTo(this.mapObj);
       Layers["Sea Mark"].addTo(this.mapObj)
 
@@ -75,6 +104,21 @@ export default {
         return this.elem;
       };
       latloninfo.addTo(this.mapObj);
+    },
+    setHumbergerMenu(){
+      //右上にdivコントロールを表示
+      let latloninfo = L.control({ position: "topright" });
+      latloninfo.onAdd = function () {
+        //divを作成
+        this.elem = L.DomUtil.create('button', "infostyle");
+        this.elem.id = "humbergermenue";
+        this.elem.addEventListener('click',e => { e.stopPropagation()});
+        return this.elem;
+      };
+      latloninfo.addTo(this.mapObj);
+      let box = document.getElementById("humbergermenue");
+      box.addEventListener('click',() => { this.multiHundler('changeMenueState')});
+      box.innerHTML = '三';
     },
     putMarker(v){
       /* マーカーを置くための関数 */
@@ -154,10 +198,6 @@ export default {
       // LocalStoragにデータ保存
       // TODO: 現在いろんなとこに書いてるから自動化する
       this.$store.dispatch('doSave')
-    },
-    openChartModal(){
-      /*ここからモーダル開ける指示 */
-      this.$emit('open-modal')
     }
   },
   computed : {
@@ -174,12 +214,15 @@ export default {
     this.initMakerOption();
     this.showCordinateOfMouse();
     this.putMarkesrsOflocalStorage(this.marker_data)
+    this.setHumbergerMenu();
   }
 }
 </script>
 
 <style>
-
+.btn-menu{
+  z-index:5;
+}
 
 #latlondiv{
   font-family: 'Noto Sans', sans-serif;
@@ -211,6 +254,29 @@ ul.ctx-menu li {
 ul.ctx-menu li:hover {
   background-color: rgb(219, 219, 219);
   transition: background-color 800ms;
+}
+
+/* メニュー表示アニメーション */
+.nav-menue-enter,
+.nav-menue-leave-to {
+  opacity: 0;
+}
+
+.nav-menue-enter-active,
+.nav-menue-leave-active {
+  transition: opacity .5s;
+}
+
+
+.nav-menue-enter-active > #nav,
+.nav-menue-leave-active > #nav {
+  transition: all .5s;
+}
+.nav-menue-enter > #nav {
+  transform: translateX(30%);
+}
+.nav-menue-leave-to > #nav {
+  transform: translateX(30%);
 }
 
 </style>

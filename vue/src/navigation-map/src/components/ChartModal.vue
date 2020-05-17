@@ -1,5 +1,5 @@
 <template>
-  <div id='overlay' v-on:click='closeModal'>
+  <div id='overlay' @click="$emit('multiHundler', 'changeChartModalState')">
     <div id='content' v-on:click='stopEvent'>
       <p class='chart-title'>chart table</p>
       <table class='table'>
@@ -33,17 +33,14 @@
 import { mapState, mapGetters } from "vuex"
 
 export default{
-  name: 'chartModal',
+  name: 'ChartModal',
   date(){
     return{
-      distsum:0
+      distsum:0,
+      showhumbergermenu:false
     }
   },
   methods:{
-    closeModal(){
-      /*ここからモーダル閉める指示 */
-      this.$emit('close-modal')
-    },
     stopEvent(){
       event.stopPropagation()
     },
