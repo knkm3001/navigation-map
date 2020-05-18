@@ -48,7 +48,7 @@ export default{
       if(dist !==  '-'){
         this.distsum += parseFloat(dist)
       }else{
-        this.distsum = 0
+        this.distsum = 0 //'-'となるのは1コ目だけ
       }
       return this.distsum.toFixed(2)
     },

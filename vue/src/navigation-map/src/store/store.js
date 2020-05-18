@@ -7,6 +7,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   //plugins: [createPersistedState()],
   state: {
+    map_data: {'basemap':'osm','layer':{'seamark':true}}, // マップ情報 これは初期値
     marker_data : [] // 各makerの緯度経度が入ってる。[{"latlng": {"lat": ****,"lng": ****},"other": {},"bear": "-","dist": "-"},{..}]
         },
   mutations: {
@@ -21,7 +22,6 @@ export default new Vuex.Store({
     },
     updateMarkerData(state,payload){
       state.marker_data = payload.marker_data
-      
     },
     pushMarkerData(state,payload){
       state.marker_data.push(payload.some_marker_data)
@@ -36,6 +36,16 @@ export default new Vuex.Store({
         updateDistAndBear(state.marker_data,payload.index)
       }
       console.log(JSON.stringify(state.marker_data,null,'\t'));
+    },
+    changeBaseMap(state,payload){
+      state.map_data['basemap'] = payload;
+      console.log('basemap changed')
+      //console.dir(state.map_data)
+    },
+    changeLayer(state,payload){
+      state.map_data['layer'] = payload;
+      console.log('layer changed')
+      //console.dir(state.map_data)
     },
   },
   getters:{

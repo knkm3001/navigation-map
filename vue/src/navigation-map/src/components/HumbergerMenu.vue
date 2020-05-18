@@ -2,7 +2,7 @@
   <div id='nav-container' @click="$emit('multiHundler', 'changeChartModalState')">
     <div id='nav' v-on:click='stopEvent'>
       <ul>
-        <li><a href='#' @click="$emit('multiHundler', 'changeLayer')">change map layer</a></li>
+        <li><a href='#' @click="$emit('multiHundler', 'changeMapOption')">change map option</a></li>
         <li><a href='#' @click="$emit('multiHundler', 'changeChartModalState')">show chart table</a></li>
         <li><a href='#'>setting</a></li>
         <li><a href='#' @click="$emit('multiHundler', 'clearAll')">clear all lines</a></li>

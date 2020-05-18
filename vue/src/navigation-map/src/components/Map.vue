@@ -4,6 +4,7 @@
       <HumbergerMenu v-show='humbergerMenuFlg' v-on:multiHundler='multiHundler'></Humbergermenu>
     </transition>
     <ChartModal v-show='chartModalFlg' v-on:multiHundler='multiHundler'></ChartModal>
+    <MapOption v-show='mapOptionFlg' v-on:multiHundler='multiHundler'></MapOption>
     <div id='Map'>
       <context-menu id="context-menu" ref="ctxMenu">
         <!--<li >mesure from here </li>-->
@@ -21,18 +22,21 @@ import { mapState } from "vuex"
 import contextMenu from 'vue-context-menu'
 import ChartModal from './ChartModal.vue'
 import HumbergerMenu from './HumbergerMenu.vue'
+import MapOption from './MapOption.vue'
 
 export default {
   name: 'Map',
   components:{
     contextMenu,
     ChartModal,
-    HumbergerMenu
+    HumbergerMenu,
+    MapOption
   },
   data(){
     return {
       humbergerMenuFlg:false,
       chartModalFlg: false,
+      mapOptionFlg: false,
       mapObj : null,
       plineObj : null,
       markers : [], // L.marker(~~) で作られたマーカーオブジェクトが入ってる配列
@@ -51,31 +55,45 @@ export default {
           if(this.humbergerMenuFlg) this.humbergerMenuFlg = !this.humbergerMenuFlg
           this.clearAll()
           break
-        case 'changeLayer':
+        case 'changeMapOption':
+          if(this.humbergerMenuFlg) this.humbergerMenuFlg = !this.humbergerMenuFlg
+          this.mapOptionFlg = !this.mapOptionFlg
           break
         case 'changeMenueState':
           this.humbergerMenuFlg = !this.humbergerMenuFlg
           break
       }
     },
-    showMap(){
+    initMap(){
       /* マップの初期化、レンダリング */
       this.mapObj = L.map( 'Map', { center: L.latLng( 35.440, 139.824 ), zoom: 11,worldCopyJump: true} )
-
-      let Base_Maps = {};
-      Base_Maps["Open street this.this.mapObj"] = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        {attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, '})
-      Base_Maps["Ocean Basemap"]  = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}')
-
-      let Layers = {};
-      Layers["Sea Mark"] = L.tileLayer( 'http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png')
-
-      //L.control.layers(Base_Maps, Layers).addTo(this.mapObj);
-      Base_Maps["Open street this.this.mapObj"].addTo(this.mapObj);
-      Layers["Sea Mark"].addTo(this.mapObj)
-
-      this.latlngs = [];
       this.plineObj = L.polyline(this.latlngs, { color: 'red', weight: 5, bubblingMouseEvents: false, edit_with_drag: true }).addTo(this.mapObj)
+    },
+    showMap(){
+
+      let Base_Maps = {
+        //open street map
+        'osm':{'url':'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'},
+               'option':{'attribution': 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, '},
+        //ocean base map
+        'obm':{'url':'http://server.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}'}
+        };
+
+      let Layers = {
+        'seamark':'http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png'
+      };
+
+      let base_map = this.map_data['basemap']
+      console.log('aaaa')
+      console.dir(this.map_data)
+      let basemap_url = Base_Maps[base_map]['url']
+      let option = Base_Maps[base_map]['option']
+      L.tileLayer(basemap_url,option).addTo(this.mapObj);
+
+      for(let [k,v] of Object.entries(this.map_data['layer'])){
+        console.log(k,v)
+        if(v) L.tileLayer(Layers[k]).addTo(this.mapObj);
+      }
     },
     showCordinateOfMouse(){
       /* マウスの座標を表示 */
@@ -140,10 +158,10 @@ export default {
       this.latlngs.push(e.latlng);
       this.plineObj.addLatLng(e.latlng);
     },
-    putMarkesrsOflocalStorage(data){
+    putMarkesrsOflocalStorage(){
       /* localstrage上のデータからマーカーをおく */
 
-      for(let v of data){
+      for(let v of this.marker_data){
         this.putMarker(v)
       }
     },
@@ -202,19 +220,36 @@ export default {
   },
   computed : {
     ...mapState({
-        marker_data: state => state.marker_data
-    })
+        marker_data: state => state.marker_data,
+        map_data:state => state.map_data
+    }),
+  },
+  watch:{
+    map_data: function(){
+
+    }
   },
   beforeCreate() {
     // LocalStorageからデータ読込
     this.$store.dispatch('doLoad')
   },
   mounted() {
+    this.initMap();
     this.showMap();
     this.initMakerOption();
     this.showCordinateOfMouse();
-    this.putMarkesrsOflocalStorage(this.marker_data)
+    this.putMarkesrsOflocalStorage()
     this.setHumbergerMenu();
+
+    // storeのマップ情報が変わったら再レンダリング
+    this.$store.subscribe((mutation) => {
+      if (Array('changeBaseMap', 'changeLayer').indexOf(mutation.type) !== -1) {
+        this.showMap();
+      }
+    })
+
+
+
   }
 }
 </script>
@@ -277,6 +312,11 @@ ul.ctx-menu li:hover {
 }
 .nav-menue-leave-to > #nav {
   transform: translateX(30%);
+}
+
+#humbergermenue{
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 1.8em;
 }
 
 </style>
