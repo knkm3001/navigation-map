@@ -18,7 +18,7 @@
 <script>
 
 import  L from 'leaflet'
-import { mapState } from "vuex"
+import { mapState, mapGetters } from "vuex"
 import contextMenu from 'vue-context-menu'
 import ChartModal from './ChartModal.vue'
 import HumbergerMenu from './HumbergerMenu.vue'
@@ -41,11 +41,12 @@ export default {
       plineObj : null,
       markers : [], // L.marker(~~) で作られたマーカーオブジェクトが入ってる配列
       latlngs : [], // マーカーの緯度経度。これはいらないかもしれない
+      map_layers :{'basemap':null,'layer':[]} //現在適応しているレイヤーのオブジェクトが入ってる
     }
   },
   methods:{
     multiHundler(selecter){
-      /** 指示を受けて実行するのが主な機能 */
+      /*** 指示を受けて実行するのが主な機能 */
       switch(selecter){
         case 'changeChartModalState':
           if(this.humbergerMenuFlg) this.humbergerMenuFlg = !this.humbergerMenuFlg
@@ -64,39 +65,55 @@ export default {
           break
       }
     },
-    initMap(){
-      /* マップの初期化、レンダリング */
+    initObj(){
+      /** マップオブジェクトとラインオブジェクトの生成 */
       this.mapObj = L.map( 'Map', { center: L.latLng( 35.440, 139.824 ), zoom: 11,worldCopyJump: true} )
       this.plineObj = L.polyline(this.latlngs, { color: 'red', weight: 5, bubblingMouseEvents: false, edit_with_drag: true }).addTo(this.mapObj)
     },
     showMap(){
+      /** マップのレンダリング */
 
-      let Base_Maps = {
-        //open street map
-        'osm':{'url':'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'},
-               'option':{'attribution': 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, '},
-        //ocean base map
-        'obm':{'url':'http://server.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}'}
-        };
-
-      let Layers = {
-        'seamark':'http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png'
+      //open street map
+      const osm_map = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors,'})
+      //ocean base map
+      const obm_map = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}',{attribution: 'Map data'})
+      // 国土地理院
+      const gsi_map = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png',{attribution: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>"})
+      
+      const Base_Maps = {osm:osm_map,obm:obm_map,gsi:gsi_map}
+      
+      /*
+      const Layers = {
+        seamark:L.tileLayer('http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png')
       };
+      */
 
-      let base_map = this.map_data['basemap']
-      console.log('aaaa')
-      console.dir(this.map_data)
-      let basemap_url = Base_Maps[base_map]['url']
-      let option = Base_Maps[base_map]['option']
-      L.tileLayer(basemap_url,option).addTo(this.mapObj);
-
-      for(let [k,v] of Object.entries(this.map_data['layer'])){
-        console.log(k,v)
-        if(v) L.tileLayer(Layers[k]).addTo(this.mapObj);
+      // 現在のベースマップ削除
+      if(this.map_layers.basemap){
+        console.log(this.mapObj.hasLayer(this.map_layers.basemap));
+        this.mapObj.removeLayer(this.map_layers.basemap);
       }
+      // 現在のベースマップ更新
+      let selected_key = this.map_data['basemap']
+      Base_Maps[selected_key].addTo(this.mapObj);
+      this.map_layers.basemap = Base_Maps[selected_key]
+
+
+      // レイヤーを表示するかどうか
+        /*
+      for(let [layer_key,isShow] of Object.entries(this.map_data['layer'])){
+        console.log([layer_key,isShow])
+        console.log(Layers[layer_key])
+
+        if(false){
+          Layers[layer_key].addTo(this.mapObj)
+          this.map_layers.push(Layers[layer_key])
+        }
+        */
+
     },
     showCordinateOfMouse(){
-      /* マウスの座標を表示 */
+      /** マウスの座標を表示 */
 
       this.mapObj.on('mousemove', (e)=>{
         //地図上を移動した際にdiv中に緯度経度を表示
@@ -106,7 +123,6 @@ export default {
         box.innerHTML = html;
         box.style.visibility = "visible";
       })
-
 
       //左上にdivコントロールを表示
       let latloninfo = L.control({ position: "bottomleft" });
@@ -124,10 +140,11 @@ export default {
       latloninfo.addTo(this.mapObj);
     },
     setHumbergerMenu(){
+      /**ハンバーガーメニュー設置 */
+
       //右上にdivコントロールを表示
       let latloninfo = L.control({ position: "topright" });
       latloninfo.onAdd = function () {
-        //divを作成
         this.elem = L.DomUtil.create('button', "infostyle");
         this.elem.id = "humbergermenue";
         this.elem.addEventListener('click',e => { e.stopPropagation()});
@@ -138,10 +155,10 @@ export default {
       box.addEventListener('click',() => { this.multiHundler('changeMenueState')});
       box.innerHTML = '三';
     },
-    putMarker(v){
-      /* マーカーを置くための関数 */
-
-      let marker = L.marker(v.latlng, { icon: L.divIcon( { className: 'red marker', iconSize: [ 16, 16 ] } ) })
+    putMarker(v,marker_id){
+      /** マーカーを置くための関数 */
+      
+      let marker = L.marker(v.latlng, { icon: L.divIcon( { className: 'red marker', iconSize: [ 16, 16 ] } ), id:marker_id})
                 .on('click', this.delMaker)
                 .bindPopup((v)=>{ // ポップアップ設定
                   let truelng = this.parseLng(v._latlng.lng);
@@ -150,34 +167,32 @@ export default {
                 .on('mouseover', function () {this.openPopup();});
       this.mapObj.addLayer(marker);
       this.markers.push(marker);
-      this.setMarkerLine(v); // マーカー間に線を引く
-    },
-    setMarkerLine(e){
-       /* マーカー間のラインを引く */
-
-      this.latlngs.push(e.latlng);
-      this.plineObj.addLatLng(e.latlng);
+      // マーカー間に線を引く
+      this.latlngs.push(v.latlng);
+      this.plineObj.addLatLng(v.latlng);
     },
     putMarkesrsOflocalStorage(){
-      /* localstrage上のデータからマーカーをおく */
-
-      for(let v of this.marker_data){
-        this.putMarker(v)
+      /** localstrage上のデータからマーカーをおく */
+      const marker_data = this.marker_data
+      for(let v of marker_data){
+        this.putMarker(v,v.id)
       }
     },
-    initMakerOption(){
-      /* クリックしたところにマーカーとラインを描画するように設定する */
+    putMarkerAtClickPoint(){
+      /** クリックしたところにマーカーをおく */
 
       this.mapObj.on('click',(e)=>{
-          this.putMarker(e)
-          let some_marker_data = {latlng:{"lat": e.latlng.lat,"lng": e.latlng.lng}, "other":{}, "bear":"-","dist":"-" }
+          console.dir(e)
+          const marker_id = Math.random().toString(32).substring(2)
+          this.putMarker(e,marker_id)
+          const some_marker_data = {id:marker_id,latlng:{"lat": e.latlng.lat,"lng": e.latlng.lng}, "other":{}, "bear":"-","dist":"-" }
           this.$store.commit('pushMarkerData',{'some_marker_data':some_marker_data});
           this.save()
           }
         )
     },
     parseLng(row_lng){
-      /* 経度を修正する */
+      /** 経度を修正する */
 
       let isNegative = false;
       if(row_lng < 0){
@@ -191,8 +206,11 @@ export default {
       }
     },
     delMaker(e){
-      /* マーカーとライン削除 */
-      let index = this.latlngs.indexOf(e.latlng);
+      /** マーカーとライン削除 */
+      const latlngs_id = this.getMarkerIDs
+
+
+      let index = latlngs_id.indexOf(e.target.options.id);
       console.log('index: '+index)
       this.markers.splice(index,1);
       this.latlngs.splice(index,1);
@@ -202,7 +220,7 @@ export default {
       this.save()
     },
     clearAll(){
-      /* マップ上のすべてのラインを削除 */
+      /** マップ上のすべてのラインを削除 */
 
       this.plineObj.setLatLngs([]);
       for(let v of this.markers){
@@ -223,20 +241,18 @@ export default {
         marker_data: state => state.marker_data,
         map_data:state => state.map_data
     }),
-  },
-  watch:{
-    map_data: function(){
-
-    }
+    ...mapGetters([
+      'getMarkerIDs'
+    ])
   },
   beforeCreate() {
     // LocalStorageからデータ読込
     this.$store.dispatch('doLoad')
   },
   mounted() {
-    this.initMap();
+    this.initObj();
     this.showMap();
-    this.initMakerOption();
+    this.putMarkerAtClickPoint();
     this.showCordinateOfMouse();
     this.putMarkesrsOflocalStorage()
     this.setHumbergerMenu();
@@ -291,7 +307,7 @@ ul.ctx-menu li:hover {
   transition: background-color 800ms;
 }
 
-/* メニュー表示アニメーション */
+/** メニュー表示アニメーション */
 .nav-menue-enter,
 .nav-menue-leave-to {
   opacity: 0;

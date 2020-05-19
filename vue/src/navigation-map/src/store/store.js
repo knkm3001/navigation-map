@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-//import createPersistedState from 'vuex-persistedstate'
 
 Vue.use(Vuex)
 
@@ -12,47 +11,66 @@ export default new Vuex.Store({
         },
   mutations: {
     save(state){
-        localStorage.setItem('store',JSON.stringify(state))
+      /** localstrageに保存 */
+      localStorage.setItem('store',JSON.stringify(state))
     },
     load(state){
-        if (localStorage.getItem('store')) {
-            const store = JSON.parse(localStorage.getItem('store'))
-            this.replaceState(Object.assign(state, store))
-          }
+      /** localstrageから取得 */
+      if (localStorage.getItem('store')) {
+          const store = JSON.parse(localStorage.getItem('store'))
+          this.replaceState(Object.assign(state, store))
+        }
     },
     updateMarkerData(state,payload){
+      /** これを使うのはClearAllのとき */
       state.marker_data = payload.marker_data
     },
     pushMarkerData(state,payload){
+      /** これを使うのはClearAllのとき */
       state.marker_data.push(payload.some_marker_data)
       if(state.marker_data.length > 1) {
-        updateDistAndBear(state.marker_data,state.marker_data.length-1)
+        // state.marker_data.length-1はpushしたもののindex
+        calcDistAndBear(state.marker_data,state.marker_data.length-1)
       }
       console.log(JSON.stringify(state.marker_data,null,'\t'));
     },
     delMarkerData(state,payload){
+      /** マーカー削除及び距離と方位の再計算*/
       state.marker_data.splice(payload.index,1)
-      if(state.marker_data.length > 1 && state.marker_data.length != payload.index) {
-        updateDistAndBear(state.marker_data,payload.index)
+      
+      if(state.marker_data.length >= 2) {
+        if(payload.index == 0){
+          // index:0を削除したときは、index:1のものを0番目にするのでそのための処理が必要
+          state.marker_data[0].bear = '-'
+          state.marker_data[0].dist = '-'
+          calcDistAndBear(state.marker_data,1) // 0番目と1番目で比較
+        }else{
+          calcDistAndBear(state.marker_data,payload.index)
+        }
       }
       console.log(JSON.stringify(state.marker_data,null,'\t'));
     },
     changeBaseMap(state,payload){
+      /**  */
       state.map_data['basemap'] = payload;
       console.log('basemap changed')
-      //console.dir(state.map_data)
     },
     changeLayer(state,payload){
+      /**  */
       state.map_data['layer'] = payload;
       console.log('layer changed')
-      //console.dir(state.map_data)
     },
   },
   getters:{
      getTotalDist(state){
+        /** 総距離を計算 */
         let totaldist = 0
         state.marker_data.forEach((elm,i)=>{if(i>0){totaldist+=parseFloat(elm.dist)}})
         return totaldist.toFixed(2)
+     },
+     getMarkerIDs(state){
+         /** idのみの配列を取得 */
+        return state.marker_data.map(marker => marker.id)
      }
   },
   actions: {
@@ -66,7 +84,7 @@ export default new Vuex.Store({
 })
 
 
-export const updateDistAndBear = function(markers,index){
+export const calcDistAndBear = function(markers,index){
   /* 
     与えられたindexのマーカーにDistとBearingを与える
     indexとinxex-1のマーカーを比較して求める。

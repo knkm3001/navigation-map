@@ -2,6 +2,7 @@
   <div id='overlay' @click="$emit('multiHundler', 'changeMapOption')">
     
     <div id='content' v-on:click='stopEvent'>
+      <p>{{this.layers}} {{this.basemap}}</p>
       <p class='title'>select map option</p>
       <p class='besemap'>select base map</p>
         <label>open street map
