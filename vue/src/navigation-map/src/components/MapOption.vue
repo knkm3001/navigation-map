@@ -6,7 +6,7 @@
       <p class='title'>select map option</p>
       <p class='besemap'>select base map</p>
         <label>open street map
-          <input type="radio" name="basemap" value='osm' v-model="basemap">
+          <input type="radio" name="basemap" value='osm' v-model="basemap" checked="checked">
         </label>
         <label>open sea map
           <input type="radio" name="basemap" value='obm' v-model="basemap">
@@ -15,8 +15,11 @@
           <input type="radio" name="basemap" value='gsi' v-model="basemap">
         </label>
       <p class='layer'>select layer</p>
-        <label>sea layer
-          <input type="checkbox" name="layer" v-model="layers['seamark']">
+        <label>open sea map
+          <input type="checkbox" name="layer" v-model="layers.osm" checked="checked">
+        </label>
+        <label>open railway map
+          <input type="checkbox" name="layer" v-model="layers.orm">
         </label>
     </div>
   </div>
@@ -24,6 +27,7 @@
 
 <script>
 
+import { mapState } from "vuex"
 
 export default {
   name: 'MapOption',
@@ -31,8 +35,8 @@ export default {
   },
   data(){
     return{
-      layers:{'seamark':null},
-      basemap:null
+      layers :Object.assign({},this.$store.state.map_data.layers),
+      basemap:this.$store.state.map_data.basenap
     }
   },
   methods:{
@@ -41,12 +45,20 @@ export default {
     }
   },
   watch:{
-    'layers.seamark' : function(){
+    'layers.osm' : function(){
+      this.$store.commit('changeLayer',this.layers)
+    },
+    'layers.orm' : function(){
       this.$store.commit('changeLayer',this.layers)
     },
     basemap : function(){
       this.$store.commit('changeBaseMap',this.basemap)
     }
+  },
+  computed : {
+    ...mapState({
+        map_data:state => state.map_data
+    }),
   }
 }
 

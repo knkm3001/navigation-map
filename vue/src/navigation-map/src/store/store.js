@@ -4,9 +4,8 @@ import Vuex from 'vuex'
 Vue.use(Vuex)
 
 export default new Vuex.Store({
-  //plugins: [createPersistedState()],
   state: {
-    map_data: {'basemap':'osm','layer':{'seamark':true}}, // マップ情報 これは初期値
+    map_data: {'basemap':'osm','layers':{ "orm": false, "osm": true }}, // マップ情報 これは初期値
     marker_data : [] // 各makerの緯度経度が入ってる。[{"latlng": {"lat": ****,"lng": ****},"other": {},"bear": "-","dist": "-"},{..}]
         },
   mutations: {
@@ -52,14 +51,16 @@ export default new Vuex.Store({
     },
     changeBaseMap(state,payload){
       /**  */
-      state.map_data['basemap'] = payload;
       console.log('basemap changed')
+      state.map_data['basemap'] = payload;
+      
     },
     changeLayer(state,payload){
       /**  */
-      state.map_data['layer'] = payload;
       console.log('layer changed')
-    },
+      state.map_data['layers'] = payload;
+      
+    }
   },
   getters:{
      getTotalDist(state){
