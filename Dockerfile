@@ -5,4 +5,5 @@ COPY ./navigation-map ./
 
 RUN npm update && \
     npm install
-RUN chmod -R 777 ./
+
+CMD npm run serve

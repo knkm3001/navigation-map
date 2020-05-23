@@ -1,12 +1,11 @@
 version: '3'
 services:
     vue:
-      build:
-         context: vue
+      build: .
       environment:
           TZ: Asia/Tokyo
       tty: true
       volumes:
-          - ./vue/navigation-map/:/usr/src/app
+          - ./navigation-map/:/usr/src/app
       ports:
            - 28080:8080
