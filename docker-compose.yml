@@ -7,17 +7,6 @@ services:
           TZ: Asia/Tokyo
       tty: true
       volumes:
-          - ./vue/src/:/usr/src/app
+          - ./vue/navigation-map/:/usr/src/app
       ports:
            - 28080:8080
-
-    express:
-        build:
-           context: express
-        environment:
-            TZ: Asia/Tokyo
-        tty: true
-        volumes:
-            - ./express/src/:/usr/src/app
-        ports:
-             - 23000:3000

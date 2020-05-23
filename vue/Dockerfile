@@ -1,8 +1,8 @@
 FROM node:12.12.0-alpine
 
 WORKDIR /usr/src/app
-COPY ./src ./
+COPY ./navigation-map ./
 
 RUN npm update && \
-    npm install -g npm @vue/cli
+    npm install
 RUN chmod -R 777 ./
