@@ -35,6 +35,7 @@ export default new Vuex.Store({
     },
     delMarkerData(state,payload){
       /** マーカー削除及び距離と方位の再計算*/
+      let ex_length = state.marker_data.length 
       state.marker_data.splice(payload.index,1)
       
       if(state.marker_data.length >= 2) {
@@ -43,6 +44,9 @@ export default new Vuex.Store({
           state.marker_data[0].bear = '-'
           state.marker_data[0].dist = '-'
           calcDistAndBear(state.marker_data,1) // 0番目と1番目で比較
+        }else if(ex_length == payload.index+1){
+          // 最後のものを削除したとき
+          calcDistAndBear(state.marker_data,payload.index-1)
         }else{
           calcDistAndBear(state.marker_data,payload.index)
         }
