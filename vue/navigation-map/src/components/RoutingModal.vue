@@ -1,7 +1,7 @@
 <template>
-  <div id='overlay' @click="$emit('multiHundler', 'changeChartModalState')">
+  <div id='overlay' @click="$emit('multiHundler', 'changeRoutingModalState')">
     <div id='content' v-on:click='stopEvent'>
-      <p class='chart-title'>chart table</p>
+      <p class='Routing-title'>Routing table</p>
       <table class='table'>
         <thead>
         <tr>
@@ -33,7 +33,7 @@
 import { mapState, mapGetters } from "vuex"
 
 export default{
-  name: 'ChartModal',
+  name: 'RoutingModal',
   date(){
     return{
       distsum:0,
@@ -99,7 +99,7 @@ export default{
   background: rgba(255, 255, 255, 0.8);
 }
 
-.chart-title{
+.Routing-title{
   font-family: 'Noto Sans', sans-serif;
   font-size:1.8em;
   text-align: center;
