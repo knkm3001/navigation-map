@@ -71,36 +71,60 @@ export default {
       this.plineObj = L.polyline(this.latlngs, { color: 'red', weight: 5, bubblingMouseEvents: false, edit_with_drag: true }).addTo(this.mapObj)
     },
     showMap(){
-      /** マップのレンダリング */
-      
+      /** 
+       * マップのレンダリング
+       * storeのミューテーション changeBaseMap,changeLayer が呼ばれるたび実行
+       */
       const Base_Maps = {
         //open street map
-        osm:L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors,'}),
+        osm:L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        {attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors,'}),
         //ocean base map
-        obm:L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}',{attribution: 'Map data'}),
+        esriobm:L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}',
+                        {attribution: 'Map data'}),
         // 国土地理院
-        gsi:L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png',{attribution: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>"})
+        gsi:L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png',
+                        {attribution: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>"}),
+        // cartodb-basemaps
+        cartodb:L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+                        {attribution: "Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL"}),
+        //topo
+        esritopo:L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}')
+        
         }
       
       const Layers = {
         // open sea map
-        osm:L.tileLayer('http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png'),
+        osm:L.tileLayer('http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+                        attribution: "<a href='http://www.openseamap.org' target='_blank'>OpenSeaMap</a> contributors"
+        }),
         // open rail map
-        orm:L.tileLayer('https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png')
+        orm:L.tileLayer('https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png'),
+        //stamentonerlabels
+        tonerlabels:L.tileLayer('http://{s}.tile.stamen.com/{variant}/{z}/{x}/{y}.png', {
+                                      attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, ' +
+                                      '<a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; ' +
+                                      'Map data {attribution.OpenStreetMap}',
+                                      variant: 'toner-labels'
+        }),
+        //stamentonerlines
+        tonerlines:L.tileLayer('http://{s}.tile.stamen.com/{variant}/{z}/{x}/{y}.png', {
+                                      attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, ' +
+                                      '<a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; ' +
+                                      'Map data {attribution.OpenStreetMap}',
+                                      variant: 'toner-lines'
+        })
       };
-
 
       // ベースマップ更新
       let isBaseMapChanged = false
       let selected_key = this.map_data['basemap']
       if(this.map_objects.basemap.basemap_key !== selected_key){
-        
         // 現在のベースマップ削除
         if(this.map_objects.basemap.basemap_obj){
           console.log('del base map')
           this.mapObj.removeLayer(this.map_objects.basemap.basemap_obj)
         }
-
         // 現在のベースマップ更新
         Base_Maps[selected_key].addTo(this.mapObj);
         this.map_objects.basemap.basemap_obj = Base_Maps[selected_key]
@@ -110,37 +134,45 @@ export default {
       }
 
       // 現在の有効になっているレイヤ名を取得
-      let active_layer_keys = []
+      let active_layers = []
       if(isBaseMapChanged){
         // ベースマップが変わっていた場合、それまでのレイヤはすべて削除
         for(let v of this.map_objects.layer){
           this.mapObj.removeLayer(v.layer_obj);
         }
-        active_layer_keys = []
+        active_layers = []
         this.map_objects.layer = []
       }else{
         for(let v of this.map_objects.layer){
-          active_layer_keys.push(v.layer_key)
+          active_layers.push(v.layer_name)
         }
       }
 
-      // レイヤを適応
-      for(let [layer_key,isShow] of Object.entries(this.map_data.layers)){
-        console.log([layer_key,isShow])
-        if(isShow){
-          if(active_layer_keys.indexOf(layer_key) == -1){
-            console.log('add new layer: '+layer_key)
-            Layers[layer_key].addTo(this.mapObj) //レイヤー追加
-            this.map_objects.layer.push({'layer_key':layer_key,'layer_obj':Layers[layer_key]})
-            active_layer_keys.push(layer_key)
-          }
-        }else if(active_layer_keys.indexOf(layer_key) != -1){ 
-          // isShow:falseのものでactive_layer_keysあるもの(つまり現在適応中)は削除
-          console.log('del layer: '+layer_key)
-          let index = active_layer_keys.indexOf(layer_key)
+      // ストアで指定されたレイヤと現在有効になっているレイヤの和集合をつくる
+      const store_layers_set  = new Set(this.map_data.layers)
+      const active_layers_set = new Set(active_layers)
+      const union = new Set([...store_layers_set,...active_layers_set])
+      const union_layers = [...union]
+
+      // レイヤを更新
+      // map_dataにある、active_layersにない -> 新しく追加するレイヤ
+      // map_dataにない、active_layersにある -> 削除するレイヤ
+      // 両方にある/ない                     -> 何もしない(両方にある場合、そのレイヤは引き続き使用する)
+      for(let layer_name of union_layers){
+        console.log(layer_name)
+        if(this.map_data.layers.indexOf(layer_name) !== -1 && active_layers.indexOf(layer_name) == -1){
+          // レイヤ追加
+          console.log('add new layer: '+layer_name)
+          Layers[layer_name].addTo(this.mapObj) //レイヤー追加
+          this.map_objects.layer.push({'layer_name':layer_name,'layer_obj':Layers[layer_name]})
+          active_layers.push(layer_name)
+        }else if(this.map_data.layers.indexOf(layer_name) == -1 && active_layers.indexOf(layer_name) !== -1){ 
+          // レイヤ削除
+          console.log('del layer: '+layer_name)
+          let index = active_layers.indexOf(layer_name)
           this.mapObj.removeLayer(this.map_objects.layer[index].layer_obj);
           this.map_objects.layer.splice(index,1);
-          active_layer_keys.splice(index,1);
+          active_layers.splice(index,1);
         }
       }
 
@@ -240,11 +272,11 @@ export default {
     },
     delMaker(e){
       /** マーカーとライン削除 */
+
       const latlngs_id = this.getMarkerIDs
-
-
       let index = latlngs_id.indexOf(e.target.options.id);
-      console.log('index: '+index)
+      console.log('id: '+e.target.options.id)
+      console.log('index: ',index)
       this.markers.splice(index,1);
       this.latlngs.splice(index,1);
       this.$store.commit('delMarkerData',{'index':index});

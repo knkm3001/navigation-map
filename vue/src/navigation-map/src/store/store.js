@@ -5,7 +5,7 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    map_data: {'basemap':'osm','layers':{ "orm": false, "osm": true }}, // マップ情報 これは初期値
+    map_data: {'basemap':'osm','layers':['osm']}, // マップ情報 これは初期値
     marker_data : [] // 各makerの緯度経度が入ってる。[{"latlng": {"lat": ****,"lng": ****},"other": {},"bear": "-","dist": "-"},{..}]
         },
   mutations: {
@@ -91,6 +91,7 @@ export const calcDistAndBear = function(markers,index){
     indexとinxex-1のマーカーを比較して求める。
   */
   console.log(index)
+  console.log(markers)
   let marker = markers[index]
   let ex_marker = markers[index-1] 
   console.dir(marker)

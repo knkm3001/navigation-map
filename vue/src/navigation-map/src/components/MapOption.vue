@@ -2,25 +2,19 @@
   <div id='overlay' @click="$emit('multiHundler', 'changeMapOption')">
     
     <div id='content' v-on:click='stopEvent'>
-      <p>{{this.layers}} {{this.basemap}}</p>
-      <p class='title'>select map option</p>
+      <p class='title'>map option</p>
       <p class='besemap'>select base map</p>
-        <label>open street map
-          <input type="radio" name="basemap" value='osm' v-model="basemap" checked="checked">
-        </label>
-        <label>open sea map
-          <input type="radio" name="basemap" value='obm' v-model="basemap">
-        </label>
-        <label>GSI(国土地理院)
-          <input type="radio" name="basemap" value='gsi' v-model="basemap">
-        </label>
+        <div v-for="basemap_option in this.basemap_options" :key=basemap_option.key>
+          <label >{{basemap_option.explanation}}
+            <input type="radio" name="basemap" v-bind:value="basemap_option.name" v-model="basemap">
+          </label>
+        </div>
       <p class='layer'>select layer</p>
-        <label>open sea map
-          <input type="checkbox" name="layer" v-model="layers.osm" checked="checked">
-        </label>
-        <label>open railway map
-          <input type="checkbox" name="layer" v-model="layers.orm">
-        </label>
+        <div v-for="layer_option in this.layer_options" :key=layer_option.name>
+          <label >{{layer_option.explanation}}
+            <input type="checkbox" name="layer" :value="layer_option.name" v-model=layers>
+          </label>
+        </div>
     </div>
   </div>
 </template>
@@ -35,8 +29,21 @@ export default {
   },
   data(){
     return{
-      layers :Object.assign({},this.$store.state.map_data.layers),
-      basemap:this.$store.state.map_data.basenap
+      basemap_options : [
+                      {'key':0,'name':'osm','explanation':'Open Street Map'},
+                      {'key':1,'name':'gsi','explanation':'GSI(国土地理院)'},
+                      {'key':2,'name':'cartodb','explanation':'cartodb-basemaps'},
+                      {'key':3,'name':'esriobm','explanation':'Esri Ocean Base Map'},
+                      {'key':4,'name':'esritopo','explanation':'Esri World Topo Map'}
+                      ],
+      layer_options: [
+                       {'key':0,'name':'osm','explanation':'Open Sea Map'},
+                       {'key':1,'name':'orm','explanation':'Open Railway Map'},
+                       {'key':2,'name':'tonerlabels','explanation':'Stamen toner-labels'},
+                       {'key':3,'name':'tonerlines','explanation':'Stamen toner-lines'}
+                      ],
+      layers :Object.assign([],this.$store.state.map_data.layers),
+      basemap:this.$store.state.map_data.basemap
     }
   },
   methods:{
@@ -45,13 +52,15 @@ export default {
     }
   },
   watch:{
-    'layers.osm' : function(){
-      this.$store.commit('changeLayer',this.layers)
-    },
-    'layers.orm' : function(){
-      this.$store.commit('changeLayer',this.layers)
+    layers : {
+      handler:function(){
+        console.log(this.layers)
+        this.$store.commit('changeLayer',this.layers)
+      },
+      deep:true
     },
     basemap : function(){
+      console.log(this.basemap)
       this.$store.commit('changeBaseMap',this.basemap)
     }
   },
