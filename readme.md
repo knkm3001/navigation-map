@@ -4,7 +4,8 @@ OpenStreetMap等のオープン地図データを用いた航路作成ツール�
 vue.js + leaflet.js で作った。
 
 ## URL
-url: https://navigation-map.herokuapp.com/
+url: https://navigation-map.herokuapp.com/  
+※Herokuだからなのか接続までに時間がかかる
 
 ## TODO
 - 任意の地点からの距離、方位の計測
